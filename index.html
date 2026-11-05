@@ -4,8 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Contrato de Adhesión y Términos de Membresía</title>
-  <!-- Librería oficial jsPDF para crear el PDF con coordenadas exactas sin recortes -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <style>
     :root {
       --primary: #0f172a;
@@ -154,7 +152,7 @@
       touch-action: none;
     }
 
-    canvas {
+    canvas#signature-pad {
       width: 100%;
       height: 100%;
       display: block;
@@ -170,7 +168,7 @@
     }
 
     button {
-      padding: 12px 20px;
+      padding: 13px 22px;
       border: none;
       border-radius: 6px;
       font-weight: 600;
@@ -201,6 +199,30 @@
       font-weight: 600;
       text-align: center;
       display: none;
+    }
+
+    /* Vista previa de la captura generada */
+    #capture-preview-box {
+      display: none;
+      margin-top: 22px;
+      padding-top: 18px;
+      border-top: 2px dashed #cbd5e1;
+      text-align: center;
+    }
+
+    #capture-preview-box p {
+      font-size: 0.86rem;
+      color: #1e293b;
+      margin-bottom: 10px;
+      font-weight: 600;
+    }
+
+    #capture-preview-img {
+      max-width: 100%;
+      height: auto;
+      border: 1px solid #94a3b8;
+      border-radius: 6px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
     }
 
     .stamp-footer {
@@ -296,11 +318,17 @@
       </div>
 
       <div class="actions">
-        <button type="submit" class="btn-primary">Firmar Contrato, Descargar PDF y Enviar</button>
+        <button type="submit" class="btn-primary">Firmar y Guardar Captura Nítida del Contrato (PNG)</button>
       </div>
 
       <div id="status-msg" class="status-msg"></div>
     </form>
+
+    <!-- Muestra la captura exacta por si el usuario está en móvil y quiere guardarla manteniendo presionado -->
+    <div id="capture-preview-box">
+      <p>Vista previa de tu captura oficial (también puedes mantener presionada la imagen para guardarla):</p>
+      <img id="capture-preview-img" alt="Captura del Contrato Firmado">
+    </div>
 
     <div class="stamp-footer" id="stamp-footer">
       Documento electrónico con validez probatoria entre las partes.
@@ -309,34 +337,33 @@
 
   <script>
     const CORREO_PROPIETARIO = "skwhitewalker@gmail.com";
-    // Si creaste tu Access Key en web3forms.com, pégala aquí entre las comillas:
-    const WEB3FORMS_ACCESS_KEY = "";
+    const WEB3FORMS_ACCESS_KEY = ""; // Opcional: pega aquí tu clave si activaste web3forms.com
 
     document.getElementById('fecha').valueAsDate = new Date();
 
-    const canvas = document.getElementById('signature-pad');
-    const ctx = canvas.getContext('2d');
+    const sigCanvas = document.getElementById('signature-pad');
+    const sigCtx = sigCanvas.getContext('2d');
     let dibujando = false;
     let firmado = false;
 
     function inicializarCanvas() {
       const ratio = Math.max(window.devicePixelRatio || 1, 1);
-      const rect = canvas.getBoundingClientRect();
-      canvas.width = rect.width * ratio;
-      canvas.height = rect.height * ratio;
-      ctx.scale(ratio, ratio);
-      ctx.fillStyle = "#ffffff";
-      ctx.fillRect(0, 0, rect.width, rect.height);
-      ctx.lineWidth = 2.4;
-      ctx.lineCap = 'round';
-      ctx.lineJoin = 'round';
-      ctx.strokeStyle = '#0f172a';
+      const rect = sigCanvas.getBoundingClientRect();
+      sigCanvas.width = rect.width * ratio;
+      sigCanvas.height = rect.height * ratio;
+      sigCtx.scale(ratio, ratio);
+      sigCtx.fillStyle = "#ffffff";
+      sigCtx.fillRect(0, 0, rect.width, rect.height);
+      sigCtx.lineWidth = 2.5;
+      sigCtx.lineCap = 'round';
+      sigCtx.lineJoin = 'round';
+      sigCtx.strokeStyle = '#0f172a';
     }
 
     window.addEventListener('load', inicializarCanvas);
 
     function obtenerCoordenadas(e) {
-      const rect = canvas.getBoundingClientRect();
+      const rect = sigCanvas.getBoundingClientRect();
       const clientX = e.touches ? e.touches[0].clientX : e.clientX;
       const clientY = e.touches ? e.touches[0].clientY : e.clientY;
       return {
@@ -350,184 +377,235 @@
       dibujando = true;
       firmado = true;
       const pos = obtenerCoordenadas(e);
-      ctx.beginPath();
-      ctx.moveTo(pos.x, pos.y);
+      sigCtx.beginPath();
+      sigCtx.moveTo(pos.x, pos.y);
     }
 
     function moverTrazo(e) {
       if (!dibujando) return;
       e.preventDefault();
       const pos = obtenerCoordenadas(e);
-      ctx.lineTo(pos.x, pos.y);
-      ctx.stroke();
+      sigCtx.lineTo(pos.x, pos.y);
+      sigCtx.stroke();
     }
 
     function finalizarTrazo(e) {
       if (!dibujando) return;
       e.preventDefault();
       dibujando = false;
-      ctx.closePath();
+      sigCtx.closePath();
     }
 
-    canvas.addEventListener('mousedown', iniciarTrazo);
-    canvas.addEventListener('mousemove', moverTrazo);
+    sigCanvas.addEventListener('mousedown', iniciarTrazo);
+    sigCanvas.addEventListener('mousemove', moverTrazo);
     window.addEventListener('mouseup', finalizarTrazo);
 
-    canvas.addEventListener('touchstart', iniciarTrazo, { passive: false });
-    canvas.addEventListener('touchmove', moverTrazo, { passive: false });
-    canvas.addEventListener('touchend', finalizarTrazo);
+    sigCanvas.addEventListener('touchstart', iniciarTrazo, { passive: false });
+    sigCanvas.addEventListener('touchmove', moverTrazo, { passive: false });
+    sigCanvas.addEventListener('touchend', finalizarTrazo);
 
     function limpiarFirma() {
-      const rect = canvas.getBoundingClientRect();
-      ctx.fillStyle = "#ffffff";
-      ctx.fillRect(0, 0, rect.width, rect.height);
+      const rect = sigCanvas.getBoundingClientRect();
+      sigCtx.fillStyle = "#ffffff";
+      sigCtx.fillRect(0, 0, rect.width, rect.height);
       firmado = false;
     }
 
-    // Construcción directa del PDF en formato A4 (210mm x 297mm) sin errores de pantalla
-    function generarPDFVectorial(datos) {
-      const { jsPDF } = window.jspdf;
-      const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+    // Divide un párrafo en líneas exactas para dibujarlo en alta resolución
+    function dividirTextoEnLineas(ctx, texto, maxWidth) {
+      const palabras = texto.split(' ');
+      const lineas = [];
+      let lineaActual = palabras[0];
 
-      // Marco exterior del documento
-      doc.setDrawColor(15, 23, 42);
-      doc.setLineWidth(0.5);
-      doc.rect(10, 10, 190, 277);
+      for (let i = 1; i < palabras.length; i++) {
+        const prueba = lineaActual + ' ' + palabras[i];
+        if (ctx.measureText(prueba).width <= maxWidth) {
+          lineaActual = prueba;
+        } else {
+          lineas.push(lineaActual);
+          lineaActual = palabras[i];
+        }
+      }
+      lineas.push(lineaActual);
+      return lineas;
+    }
+
+    // Genera una imagen PNG de alta definición (1200px de ancho) solo del documento firmado
+    function generarCapturaNitida(datos) {
+      const clausulas = [
+        {
+          titulo: "PRIMERA: OBJETO Y NATURALEZA EDUCATIVA",
+          cuerpo: "El presente contrato regula el ingreso y permanencia del suscriptor (\"EL PARTICIPANTE\") en los grupos privados de formación dirigidos por el administrador del proyecto (\"LA ADMINISTRACIÓN\"). EL PARTICIPANTE reconoce que la totalidad del contenido, guías, parámetros técnicos, herramientas y asesorías compartidas tienen un propósito estrictamente educativo, informativo y orientativo."
+        },
+        {
+          titulo: "SEGUNDA: OBLIGACIÓN DE MEDIOS Y AUSENCIA DE GARANTÍA DE COBROS",
+          cuerpo: "LA ADMINISTRACIÓN asume una obligación de medios (suministro de guía y soporte formativo) y en ningún caso una obligación de resultados. En consecuencia, EL PARTICIPANTE acepta que la información provista NO GARANTIZA EL CIEN POR CIENTO (100%) DE EFECTIVIDAD EN LA OBTENCIÓN DE COBROS, REMUNERACIONES O INGRESOS ECONÓMICOS, por resultar material, técnica y jurídicamente imposible asegurar resultados financieros que dependen directamente del esfuerzo individual, dedicación, constancia y ejecución de EL PARTICIPANTE, así como de políticas y criterios de plataformas de terceros ajenas al control de LA ADMINISTRACIÓN."
+        },
+        {
+          titulo: "TERCERA: POLÍTICA DE NO REEMBOLSO Y EXENCIÓN DE DEVOLUCIÓN",
+          cuerpo: "Debido a que el importe abonado por concepto de ingreso otorga acceso inmediato a información estratégica, guías digitales y soporte de consumo instantáneo, TODO PAGO REALIZADO PARA INGRESAR A LOS GRUPOS EDUCATIVOS ES DEFINITIVO Y NO REEMBOLSABLE. EL PARTICIPANTE exime expresamente a LA ADMINISTRACIÓN de cualquier obligación de devolución de dinero, renunciando a presentar reclamos o disputas bajo el argumento de no haber obtenido cobros o por desistimiento voluntario."
+        },
+        {
+          titulo: "CUARTA: CUOTA DE MANTENIMIENTO MENSUAL OBLIGATORIA",
+          cuerpo: "Para conservar la membresía activa, el soporte continuo y la permanencia dentro de los grupos, EL PARTICIPANTE se obliga al pago de una cuota mensual estipulada por LA ADMINISTRACIÓN, fijada actualmente en CINCO DÓLARES ESTADOUNIDENSES ($5.00 USD) (o su equivalente autorizado). Dicha mensualidad tiene carácter obligatorio y será exigible cumplido exactamente UN (1) MES CALENDARIO a partir de la fecha de ingreso al grupo. El incumplimiento de este pago faculta a LA ADMINISTRACIÓN a revocar el acceso de forma inmediata sin derecho a reclamo ni reembolso de importes previos."
+        }
+      ];
+
+      const textoDeclaracion = "DECLARACIÓN DE CONFORMIDAD: Al completar sus datos y estampar su firma digital, EL PARTICIPANTE declara ser mayor de edad, obrar de libre voluntad y aceptar sin reservas todas las cláusulas estipuladas en este documento.";
+
+      const anchoCanvas = 1200;
+      const margenX = 75;
+      const anchoUtil = anchoCanvas - (margenX * 2);
+
+      // Lienzo temporal para medir el alto exacto antes de dibujar
+      const tempCanvas = document.createElement('canvas');
+      const tempCtx = tempCanvas.getContext('2d');
+      tempCtx.font = "20px 'Segoe UI', Arial, sans-serif";
+
+      let altoCalculado = 230; // Encabezado
+      clausulas.forEach(c => {
+        const lineas = dividirTextoEnLineas(tempCtx, c.cuerpo, anchoUtil);
+        altoCalculado += 32 + (lineas.length * 30) + 24;
+      });
+      altoCalculado += 120 + 340 + 90; // Declaración + Caja de Firma + Pie de página
+
+      // Crear el lienzo final con medidas exactas
+      const outCanvas = document.createElement('canvas');
+      outCanvas.width = anchoCanvas;
+      outCanvas.height = altoCalculado;
+      const ctx = outCanvas.getContext('2d');
+
+      // Fondo blanco puro y marco formal
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, outCanvas.width, outCanvas.height);
+
+      ctx.strokeStyle = "#0f172a";
+      ctx.lineWidth = 3;
+      ctx.strokeRect(35, 35, outCanvas.width - 70, outCanvas.height - 70);
 
       // Encabezado
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(12);
-      doc.setTextColor(15, 23, 42);
-      doc.text("CONTRATO DE ADHESIÓN, TÉRMINOS DE MEMBRESÍA", 105, 21, { align: "center" });
-      doc.text("Y EXENCIÓN DE RESPONSABILIDAD", 105, 27, { align: "center" });
+      ctx.fillStyle = "#0f172a";
+      ctx.font = "bold 26px 'Segoe UI', Arial, sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillText("CONTRATO DE ADHESIÓN, TÉRMINOS DE MEMBRESÍA", anchoCanvas / 2, 95);
+      ctx.fillText("Y EXENCIÓN DE RESPONSABILIDAD", anchoCanvas / 2, 130);
 
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(8.5);
-      doc.setTextColor(71, 85, 105);
-      doc.text("Acuerdo vinculante de acceso a comunidad privada con fines estrictamente formativos", 105, 33, { align: "center" });
+      ctx.fillStyle = "#475569";
+      ctx.font = "18px 'Segoe UI', Arial, sans-serif";
+      ctx.fillText("Acuerdo vinculante de acceso a comunidad privada con fines estrictamente formativos", anchoCanvas / 2, 165);
 
-      // Línea divisoria del título
-      doc.setDrawColor(15, 23, 42);
-      doc.setLineWidth(0.6);
-      doc.line(16, 37, 194, 37);
+      ctx.beginPath();
+      ctx.moveTo(margenX, 190);
+      ctx.lineTo(anchoCanvas - margenX, 190);
+      ctx.strokeStyle = "#0f172a";
+      ctx.lineWidth = 2.5;
+      ctx.stroke();
 
-      let y = 45;
-      const anchoTexto = 178;
-      const margenIzq = 16;
+      // Dibujar cláusulas
+      let y = 235;
+      ctx.textAlign = "left";
 
-      function agregarClausula(titulo, cuerpo) {
-        doc.setFont("helvetica", "bold");
-        doc.setFontSize(9.5);
-        doc.setTextColor(15, 23, 42);
-        doc.text(titulo, margenIzq, y);
-        y += 5;
+      clausulas.forEach(c => {
+        ctx.fillStyle = "#0f172a";
+        ctx.font = "bold 20px 'Segoe UI', Arial, sans-serif";
+        ctx.fillText(c.titulo, margenX, y);
+        y += 30;
 
-        doc.setFont("helvetica", "normal");
-        doc.setFontSize(9.2);
-        doc.setTextColor(30, 41, 59);
-        const lineas = doc.splitTextToSize(cuerpo, anchoTexto);
-        doc.text(lineas, margenIzq, y);
-        y += (lineas.length * 4.5) + 4;
-      }
-
-      agregarClausula(
-        "PRIMERA: OBJETO Y NATURALEZA EDUCATIVA",
-        "El presente contrato regula el ingreso y permanencia del suscriptor (\"EL PARTICIPANTE\") en los grupos privados de formación dirigidos por el administrador del proyecto (\"LA ADMINISTRACIÓN\"). EL PARTICIPANTE reconoce que la totalidad del contenido, guías, parámetros técnicos, herramientas y asesorías compartidas tienen un propósito estrictamente educativo, informativo y orientativo."
-      );
-
-      agregarClausula(
-        "SEGUNDA: OBLIGACIÓN DE MEDIOS Y AUSENCIA DE GARANTÍA DE COBROS",
-        "LA ADMINISTRACIÓN asume una obligación de medios (suministro de guía y soporte formativo) y en ningún caso una obligación de resultados. En consecuencia, EL PARTICIPANTE acepta que la información provista NO GARANTIZA EL CIEN POR CIENTO (100%) DE EFECTIVIDAD EN LA OBTENCIÓN DE COBROS, REMUNERACIONES O INGRESOS ECONÓMICOS, por resultar material, técnica y jurídicamente imposible asegurar resultados financieros que dependen directamente del esfuerzo individual, dedicación, constancia y ejecución de EL PARTICIPANTE, así como de políticas y criterios de plataformas de terceros ajenas al control de LA ADMINISTRACIÓN."
-      );
-
-      agregarClausula(
-        "TERCERA: POLÍTICA DE NO REEMBOLSO Y EXENCIÓN DE DEVOLUCIÓN",
-        "Debido a que el importe abonado por concepto de ingreso otorga acceso inmediato a información estratégica, guías digitales y soporte de consumo instantáneo, TODO PAGO REALIZADO PARA INGRESAR A LOS GRUPOS EDUCATIVOS ES DEFINITIVO Y NO REEMBOLSABLE. EL PARTICIPANTE exime expresamente a LA ADMINISTRACIÓN de cualquier obligación de devolución de dinero, renunciando a presentar reclamos o disputas bajo el argumento de no haber obtenido cobros o por desistimiento voluntario."
-      );
-
-      agregarClausula(
-        "CUARTA: CUOTA DE MANTENIMIENTO MENSUAL OBLIGATORIA",
-        "Para conservar la membresía activa, el soporte continuo y la permanencia dentro de los grupos, EL PARTICIPANTE se obliga al pago de una cuota mensual estipulada por LA ADMINISTRACIÓN, fijada actualmente en CINCO DÓLARES ESTADOUNIDENSES ($5.00 USD) (o su equivalente autorizado). Dicha mensualidad tiene carácter obligatorio y será exigible cumplido exactamente UN (1) MES CALENDARIO a partir de la fecha de ingreso al grupo. El incumplimiento de este pago faculta a LA ADMINISTRACIÓN a revocar el acceso de forma inmediata sin derecho a reclamo ni reembolso de importes previos."
-      );
+        ctx.fillStyle = "#1e293b";
+        ctx.font = "20px 'Segoe UI', Arial, sans-serif";
+        const lineas = dividirTextoEnLineas(ctx, c.cuerpo, anchoUtil);
+        lineas.forEach(linea => {
+          ctx.fillText(linea, margenX, y);
+          y += 30;
+        });
+        y += 22;
+      });
 
       // Recuadro de Declaración de Conformidad
-      y += 2;
-      doc.setFillColor(241, 245, 249);
-      doc.setDrawColor(203, 213, 225);
-      doc.rect(margenIzq, y, anchoTexto, 15, 'FD');
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(8.5);
-      doc.setTextColor(15, 23, 42);
-      const declTexto = doc.splitTextToSize(
-        "DECLARACIÓN DE CONFORMIDAD: Al completar sus datos y estampar su firma digital, EL PARTICIPANTE declara ser mayor de edad, obrar de libre voluntad y aceptar sin reservas todas las cláusulas estipuladas en este documento.",
-        anchoTexto - 6
-      );
-      doc.text(declTexto, margenIzq + 3, y + 5.5);
+      ctx.fillStyle = "#f1f5f9";
+      ctx.fillRect(margenX, y, anchoUtil, 88);
+      ctx.fillStyle = "#0f172a";
+      ctx.fillRect(margenX, y, 6, 88);
 
-      // Bloque inferior de Acta y Firma del Participante
-      y += 22;
-      doc.setFillColor(248, 250, 252);
-      doc.setDrawColor(148, 163, 184);
-      doc.setLineWidth(0.4);
-      doc.rect(margenIzq, y, anchoTexto, 55, 'FD');
+      ctx.font = "bold 18px 'Segoe UI', Arial, sans-serif";
+      const lineasDecl = dividirTextoEnLineas(ctx, textoDeclaracion, anchoUtil - 40);
+      let yDecl = y + 32;
+      lineasDecl.forEach(l => {
+        ctx.fillText(l, margenX + 22, yDecl);
+        yDecl += 26;
+      });
 
-      // Columna izquierda: Datos del participante
-      let yDatos = y + 8;
-      const xDatos = margenIzq + 4;
+      y += 118;
 
-      function filaDato(etiqueta, valor) {
-        doc.setFont("helvetica", "bold");
-        doc.setFontSize(8.5);
-        doc.setTextColor(15, 23, 42);
-        doc.text(etiqueta, xDatos, yDatos);
-        const anchoEtiqueta = doc.getTextWidth(etiqueta) + 2;
-        doc.setFont("helvetica", "normal");
-        doc.text(String(valor), xDatos + anchoEtiqueta, yDatos);
-        yDatos += 7.5;
+      // Bloque de Acta de Datos y Firma del Participante
+      const altoCajaFirma = 300;
+      ctx.fillStyle = "#f8fafc";
+      ctx.strokeStyle = "#94a3b8";
+      ctx.lineWidth = 2;
+      ctx.fillRect(margenX, y, anchoUtil, altoCajaFirma);
+      ctx.strokeRect(margenX, y, anchoUtil, altoCajaFirma);
+
+      // Datos del participante (Columna Izquierda)
+      let yDato = y + 48;
+      const xDato = margenX + 28;
+
+      function dibujarFilaDato(etiqueta, valor) {
+        ctx.fillStyle = "#0f172a";
+        ctx.font = "bold 19px 'Segoe UI', Arial, sans-serif";
+        ctx.fillText(etiqueta, xDato, yDato);
+        const despl = ctx.measureText(etiqueta).width + 10;
+        ctx.fillStyle = "#1e293b";
+        ctx.font = "19px 'Segoe UI', Arial, sans-serif";
+        ctx.fillText(valor, xDato + despl, yDato);
+        yDato += 42;
       }
 
-      filaDato("PARTICIPANTE:", datos.nombre);
-      filaDato("DOCUMENTO DE IDENTIDAD:", datos.documento);
-      filaDato("USUARIO / CONTACTO:", datos.contacto);
-      filaDato("FECHA DE INGRESO:", datos.fecha);
-      filaDato("CUOTA MENSUAL:", "$5.00 USD obligatorios al cumplir 1 mes");
-      filaDato("ESTADO:", "Términos y No Reembolso aceptados");
+      dibujarFilaDato("PARTICIPANTE:", datos.nombre);
+      dibujarFilaDato("DOCUMENTO / ID:", datos.documento);
+      dibujarFilaDato("CONTACTO:", datos.contacto);
+      dibujarFilaDato("FECHA DE INGRESO:", datos.fecha);
+      dibujarFilaDato("CUOTA MENSUAL:", "$5.00 USD obligatorios al cumplir 1 mes");
+      dibujarFilaDato("ESTADO:", "Términos y No Reembolso Aceptados");
 
-      // Columna derecha: Recuadro blanco con la Firma Digital
-      const xFirma = 124;
-      const yFirma = y + 5;
-      const anchoFirma = 66;
-      const altoFirma = 45;
+      // Caja blanca de la Firma Digital (Columna Derecha)
+      const xCajaDer = margenX + anchoUtil - 400;
+      const yCajaDer = y + 25;
+      const wCajaDer = 372;
+      const hCajaDer = 250;
 
-      doc.setFillColor(255, 255, 255);
-      doc.setDrawColor(203, 213, 225);
-      doc.rect(xFirma, yFirma, anchoFirma, altoFirma, 'FD');
+      ctx.fillStyle = "#ffffff";
+      ctx.strokeStyle = "#cbd5e1";
+      ctx.lineWidth = 1.5;
+      ctx.fillRect(xCajaDer, yCajaDer, wCajaDer, hCajaDer);
+      ctx.strokeRect(xCajaDer, yCajaDer, wCajaDer, hCajaDer);
 
-      // Insertar la imagen PNG del trazo de la firma
-      doc.addImage(datos.firmaBase64, 'PNG', xFirma + 3, yFirma + 2, anchoFirma - 6, 31);
+      // Copiar el trazo de la firma directamente dentro del documento
+      ctx.drawImage(sigCanvas, xCajaDer + 12, yCajaDer + 10, wCajaDer - 24, 175);
 
-      // Línea y texto debajo de la firma
-      doc.setDrawColor(15, 23, 42);
-      doc.setLineWidth(0.4);
-      doc.line(xFirma + 5, yFirma + 36, xFirma + anchoFirma - 5, yFirma + 36);
+      // Línea de firma
+      ctx.beginPath();
+      ctx.moveTo(xCajaDer + 25, yCajaDer + 198);
+      ctx.lineTo(xCajaDer + wCajaDer - 25, yCajaDer + 198);
+      ctx.strokeStyle = "#0f172a";
+      ctx.lineWidth = 2;
+      ctx.stroke();
 
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(7.5);
-      doc.setTextColor(15, 23, 42);
-      doc.text("FIRMA CONFORME DEL PARTICIPANTE", xFirma + (anchoFirma / 2), yFirma + 41, { align: "center" });
+      ctx.fillStyle = "#0f172a";
+      ctx.font = "bold 16px 'Segoe UI', Arial, sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillText("FIRMA CONFORME DEL PARTICIPANTE", xCajaDer + (wCajaDer / 2), yCajaDer + 226);
 
-      // Sello de verificación al pie de la hoja A4
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(7.5);
-      doc.setTextColor(100, 116, 139);
-      doc.text(
-        `Firmado digitalmente por ${datos.nombre} (ID: ${datos.documento}) | Fecha: ${datos.fechaHoraExacta} | Código: ${datos.idUnico}`,
-        105,
-        281,
-        { align: "center" }
+      // Sello inferior de verificación
+      y += altoCajaFirma + 42;
+      ctx.fillStyle = "#64748b";
+      ctx.font = "16px 'Segoe UI', Arial, sans-serif";
+      ctx.fillText(
+        `Firmado digitalmente por ${datos.nombre} (ID: ${datos.documento})  |  Fecha: ${datos.fechaHoraExacta}  |  Código: ${datos.idUnico}`,
+        anchoCanvas / 2,
+        y
       );
 
-      doc.save(datos.nombreArchivo);
+      return outCanvas.toDataURL("image/png");
     }
 
     async function procesarContrato(e) {
@@ -544,31 +622,42 @@
       const fecha = document.getElementById('fecha').value;
       const fechaHoraExacta = new Date().toLocaleString();
       const idUnico = 'REG-' + Date.now().toString(36).toUpperCase();
-      const firmaBase64 = canvas.toDataURL('image/png');
-      const nombreArchivo = `Contrato_${nombre.replace(/\s+/g, '_')}_${idUnico}.pdf`;
+      const nombreArchivo = `Contrato_${nombre.replace(/\s+/g, '_')}_${idUnico}.png`;
 
-      const statusMsg = document.getElementById('status-msg');
-      statusMsg.style.display = 'block';
-      statusMsg.style.background = '#dbeafe';
-      statusMsg.style.color = '#1e40af';
-      statusMsg.textContent = 'Generando PDF firmado...';
-
-      // 1. Generar y descargar el PDF A4 con coordenadas exactas
-      generarPDFVectorial({
+      // 1. Generar la captura PNG en alta definición
+      const dataUrlPNG = generarCapturaNitida({
         nombre,
         documento,
         contacto,
         fecha,
         fechaHoraExacta,
-        idUnico,
-        firmaBase64,
-        nombreArchivo
+        idUnico
       });
+
+      // 2. Descargar automáticamente la imagen PNG
+      const enlaceDescarga = document.createElement('a');
+      enlaceDescarga.href = dataUrlPNG;
+      enlaceDescarga.download = nombreArchivo;
+      document.body.appendChild(enlaceDescarga);
+      enlaceDescarga.click();
+      document.body.removeChild(enlaceDescarga);
+
+      // 3. Mostrar la captura en pantalla para fácil guardado en teléfonos
+      const previewBox = document.getElementById('capture-preview-box');
+      const previewImg = document.getElementById('capture-preview-img');
+      previewImg.src = dataUrlPNG;
+      previewBox.style.display = 'block';
 
       document.getElementById('stamp-footer').innerHTML =
         `Firmado digitalmente por <strong>${nombre}</strong> (ID: ${documento}) | Registro: ${fechaHoraExacta} | Código: <strong>${idUnico}</strong>`;
 
-      // 2. Enviar notificación por correo en segundo plano
+      const statusMsg = document.getElementById('status-msg');
+      statusMsg.style.display = 'block';
+      statusMsg.style.background = '#dcfce7';
+      statusMsg.style.color = '#166534';
+      statusMsg.textContent = '¡Captura del contrato guardada con éxito! Envía la imagen descargada al administrador.';
+
+      // 4. Notificar por correo en segundo plano
       try {
         if (WEB3FORMS_ACCESS_KEY !== "") {
           await fetch('https://api.web3forms.com/submit', {
@@ -602,12 +691,8 @@
           });
         }
       } catch (err) {
-        // Si el servidor de correo externo tarda o falla, no interrumpe la descarga del PDF
+        // Ignorar si el servidor externo de correo demora
       }
-
-      statusMsg.style.background = '#dcfce7';
-      statusMsg.style.color = '#166534';
-      statusMsg.textContent = '¡Contrato firmado y descargado correctamente! Envía el archivo PDF descargado al administrador para completar tu registro.';
     }
   </script>
 </body>
