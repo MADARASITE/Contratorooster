@@ -4,7 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Contrato de Adhesión y Términos de Membresía</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <!-- Librería oficial jsPDF para crear el PDF con coordenadas exactas sin recortes -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <style>
     :root {
       --primary: #0f172a;
@@ -24,7 +25,7 @@
       font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
       background-color: var(--bg);
       color: var(--text);
-      line-height: 1.5;
+      line-height: 1.55;
       padding: 20px 12px;
     }
 
@@ -38,24 +39,11 @@
       box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
     }
 
-    /* Modo compacto automático al exportar para que quepa en 1 sola hoja A4 */
-    .contract-wrapper.pdf-export-mode {
-      width: 750px !important;
-      max-width: 750px !important;
-      margin: 0 !important;
-      padding: 22px 28px !important;
-      border: 1px solid #94a3b8 !important;
-      border-radius: 0 !important;
-      box-shadow: none !important;
-      font-size: 12px !important;
-      line-height: 1.4 !important;
-    }
-
     .header {
       text-align: center;
       border-bottom: 2px solid var(--primary);
-      padding-bottom: 12px;
-      margin-bottom: 16px;
+      padding-bottom: 14px;
+      margin-bottom: 18px;
     }
 
     .header h1 {
@@ -65,61 +53,41 @@
       letter-spacing: 0.4px;
     }
 
-    .pdf-export-mode .header h1 {
-      font-size: 1.05rem !important;
-    }
-
     .header p {
-      font-size: 0.82rem;
+      font-size: 0.84rem;
       color: #475569;
       margin-top: 4px;
     }
 
     .clause {
-      margin-bottom: 12px;
+      margin-bottom: 14px;
       text-align: justify;
-      font-size: 0.92rem;
-    }
-
-    .pdf-export-mode .clause {
-      font-size: 0.78rem !important;
-      margin-bottom: 9px !important;
+      font-size: 0.93rem;
     }
 
     .clause-title {
       font-weight: 700;
       color: var(--primary);
       display: block;
-      margin-bottom: 2px;
+      margin-bottom: 3px;
       text-transform: uppercase;
-      font-size: 0.84rem;
-    }
-
-    .pdf-export-mode .clause-title {
-      font-size: 0.76rem !important;
+      font-size: 0.85rem;
     }
 
     .highlight-box {
       background-color: #f8fafc;
       border-left: 4px solid var(--primary);
-      padding: 10px 14px;
-      margin: 14px 0;
-      font-size: 0.86rem;
+      padding: 12px 14px;
+      margin: 16px 0;
+      font-size: 0.88rem;
     }
 
-    .pdf-export-mode .highlight-box {
-      font-size: 0.75rem !important;
-      padding: 8px 12px !important;
-      margin: 10px 0 !important;
-    }
-
-    /* Formulario interactivo */
     .form-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 14px;
       margin-top: 18px;
-      padding-top: 16px;
+      padding-top: 18px;
       border-top: 1px solid var(--border);
     }
 
@@ -165,7 +133,7 @@
 
     .checkbox-group label {
       font-weight: 500;
-      font-size: 0.85rem;
+      font-size: 0.86rem;
       margin: 0;
       cursor: pointer;
     }
@@ -225,86 +193,23 @@
       min-width: 240px;
     }
 
-    /* Bloque de Acta Firmada (se activa al exportar a PDF para que nunca falle la firma) */
-    #signed-certificate-block {
-      display: none;
-      margin-top: 14px;
-      padding-top: 12px;
-      border-top: 2px solid var(--primary);
-    }
-
-    .cert-grid {
-      display: grid;
-      grid-template-columns: 1.2fr 0.8fr;
-      gap: 16px;
-      align-items: center;
-      background: #f8fafc;
-      border: 1px solid #cbd5e1;
-      border-radius: 6px;
-      padding: 14px;
-    }
-
-    .cert-details p {
-      font-size: 0.82rem;
-      margin-bottom: 5px;
-      color: #0f172a;
-    }
-
-    .cert-signature-box {
-      text-align: center;
-      background: #ffffff;
-      border: 1px solid #cbd5e1;
-      border-radius: 6px;
-      padding: 8px;
-    }
-
-    .cert-signature-box img {
-      max-width: 220px;
-      height: 85px;
-      object-fit: contain;
-      display: block;
-      margin: 0 auto;
-    }
-
-    .cert-signature-line {
-      border-top: 1px solid #0f172a;
-      margin-top: 4px;
-      padding-top: 4px;
-      font-size: 0.75rem;
-      font-weight: 700;
-      color: #0f172a;
-    }
-
-    .stamp-footer {
-      margin-top: 12px;
-      font-size: 0.72rem;
-      color: #475569;
-      text-align: center;
-      border-top: 1px solid #e2e8f0;
-      padding-top: 8px;
-    }
-
-    /* Panel de control inferior fuera del PDF */
-    .post-actions {
-      max-width: 780px;
-      margin: 16px auto 0;
-      text-align: center;
-    }
-
     .status-msg {
+      margin-top: 16px;
       padding: 12px;
       border-radius: 6px;
       font-size: 0.9rem;
       font-weight: 600;
+      text-align: center;
       display: none;
-      margin-bottom: 12px;
     }
 
-    .btn-secondary {
-      background-color: #0f172a;
-      color: #ffffff;
-      display: none;
-      margin: 0 auto;
+    .stamp-footer {
+      margin-top: 18px;
+      font-size: 0.76rem;
+      color: #64748b;
+      text-align: center;
+      border-top: 1px solid #e2e8f0;
+      padding-top: 10px;
     }
 
     @media (max-width: 600px) {
@@ -317,16 +222,12 @@
       .checkbox-group {
         grid-column: span 1;
       }
-      .cert-grid {
-        grid-template-columns: 1fr;
-      }
     }
   </style>
 </head>
 <body>
 
-  <!-- CONTENEDOR QUE SE EXPORTA A PDF -->
-  <div class="contract-wrapper" id="contract-document">
+  <div class="contract-wrapper">
     <div class="header">
       <h1>Contrato de Adhesión, Términos de Membresía y Exención de Responsabilidad</h1>
       <p>Acuerdo vinculante de acceso a comunidad privada con fines estrictamente formativos</p>
@@ -356,7 +257,6 @@
       <strong>Declaración de Conformidad:</strong> Al completar sus datos y estampar su firma digital, EL PARTICIPANTE declara ser mayor de edad, obrar de libre voluntad y aceptar sin reservas todas las cláusulas estipuladas en este documento.
     </div>
 
-    <!-- FORMULARIO INTERACTIVO PARA LLENAR -->
     <form id="contract-form" onsubmit="procesarContrato(event)">
       <div class="form-grid">
         <div class="form-group">
@@ -396,44 +296,22 @@
       </div>
 
       <div class="actions">
-        <button type="submit" class="btn-primary" id="btn-submit">Firmar Contrato, Descargar PDF y Enviar</button>
+        <button type="submit" class="btn-primary">Firmar Contrato, Descargar PDF y Enviar</button>
       </div>
-    </form>
 
-    <!-- BLOQUE OFICIAL DE DATOS Y FIRMA QUE APARECE EN EL PDF -->
-    <div id="signed-certificate-block">
-      <div class="cert-grid">
-        <div class="cert-details">
-          <p><strong>PARTICIPANTE:</strong> <span id="out-nombre"></span></p>
-          <p><strong>DOCUMENTO DE IDENTIDAD:</strong> <span id="out-documento"></span></p>
-          <p><strong>USUARIO / CONTACTO:</strong> <span id="out-contacto"></span></p>
-          <p><strong>FECHA DE INGRESO:</strong> <span id="out-fecha"></span></p>
-          <p><strong>CUOTA MENSUAL ACEPTADA:</strong> $5.00 USD obligatorios al cumplir 1 mes</p>
-          <p><strong>ESTADO:</strong> Términos y exención de reembolso aceptados íntegramente</p>
-        </div>
-        <div class="cert-signature-box">
-          <img id="out-firma-img" src="" alt="Firma Digital del Participante">
-          <div class="cert-signature-line">FIRMA CONFORME DEL PARTICIPANTE</div>
-        </div>
-      </div>
-    </div>
+      <div id="status-msg" class="status-msg"></div>
+    </form>
 
     <div class="stamp-footer" id="stamp-footer">
       Documento electrónico con validez probatoria entre las partes.
     </div>
   </div>
 
-  <!-- MENSAJES DE ESTADO FUERA DEL PDF -->
-  <div class="post-actions">
-    <div id="status-msg" class="status-msg"></div>
-    <button type="button" id="btn-reset" class="btn-secondary" onclick="reiniciarFormulario()">Firmar un nuevo contrato</button>
-  </div>
-
   <script>
-    // Correo configurado para recibir los contratos firmados
     const CORREO_PROPIETARIO = "skwhitewalker@gmail.com";
+    // Si creaste tu Access Key en web3forms.com, pégala aquí entre las comillas:
+    const WEB3FORMS_ACCESS_KEY = "";
 
-    // Asignar fecha actual por defecto
     document.getElementById('fecha').valueAsDate = new Date();
 
     const canvas = document.getElementById('signature-pad');
@@ -506,6 +384,152 @@
       firmado = false;
     }
 
+    // Construcción directa del PDF en formato A4 (210mm x 297mm) sin errores de pantalla
+    function generarPDFVectorial(datos) {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+
+      // Marco exterior del documento
+      doc.setDrawColor(15, 23, 42);
+      doc.setLineWidth(0.5);
+      doc.rect(10, 10, 190, 277);
+
+      // Encabezado
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(12);
+      doc.setTextColor(15, 23, 42);
+      doc.text("CONTRATO DE ADHESIÓN, TÉRMINOS DE MEMBRESÍA", 105, 21, { align: "center" });
+      doc.text("Y EXENCIÓN DE RESPONSABILIDAD", 105, 27, { align: "center" });
+
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8.5);
+      doc.setTextColor(71, 85, 105);
+      doc.text("Acuerdo vinculante de acceso a comunidad privada con fines estrictamente formativos", 105, 33, { align: "center" });
+
+      // Línea divisoria del título
+      doc.setDrawColor(15, 23, 42);
+      doc.setLineWidth(0.6);
+      doc.line(16, 37, 194, 37);
+
+      let y = 45;
+      const anchoTexto = 178;
+      const margenIzq = 16;
+
+      function agregarClausula(titulo, cuerpo) {
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(9.5);
+        doc.setTextColor(15, 23, 42);
+        doc.text(titulo, margenIzq, y);
+        y += 5;
+
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(9.2);
+        doc.setTextColor(30, 41, 59);
+        const lineas = doc.splitTextToSize(cuerpo, anchoTexto);
+        doc.text(lineas, margenIzq, y);
+        y += (lineas.length * 4.5) + 4;
+      }
+
+      agregarClausula(
+        "PRIMERA: OBJETO Y NATURALEZA EDUCATIVA",
+        "El presente contrato regula el ingreso y permanencia del suscriptor (\"EL PARTICIPANTE\") en los grupos privados de formación dirigidos por el administrador del proyecto (\"LA ADMINISTRACIÓN\"). EL PARTICIPANTE reconoce que la totalidad del contenido, guías, parámetros técnicos, herramientas y asesorías compartidas tienen un propósito estrictamente educativo, informativo y orientativo."
+      );
+
+      agregarClausula(
+        "SEGUNDA: OBLIGACIÓN DE MEDIOS Y AUSENCIA DE GARANTÍA DE COBROS",
+        "LA ADMINISTRACIÓN asume una obligación de medios (suministro de guía y soporte formativo) y en ningún caso una obligación de resultados. En consecuencia, EL PARTICIPANTE acepta que la información provista NO GARANTIZA EL CIEN POR CIENTO (100%) DE EFECTIVIDAD EN LA OBTENCIÓN DE COBROS, REMUNERACIONES O INGRESOS ECONÓMICOS, por resultar material, técnica y jurídicamente imposible asegurar resultados financieros que dependen directamente del esfuerzo individual, dedicación, constancia y ejecución de EL PARTICIPANTE, así como de políticas y criterios de plataformas de terceros ajenas al control de LA ADMINISTRACIÓN."
+      );
+
+      agregarClausula(
+        "TERCERA: POLÍTICA DE NO REEMBOLSO Y EXENCIÓN DE DEVOLUCIÓN",
+        "Debido a que el importe abonado por concepto de ingreso otorga acceso inmediato a información estratégica, guías digitales y soporte de consumo instantáneo, TODO PAGO REALIZADO PARA INGRESAR A LOS GRUPOS EDUCATIVOS ES DEFINITIVO Y NO REEMBOLSABLE. EL PARTICIPANTE exime expresamente a LA ADMINISTRACIÓN de cualquier obligación de devolución de dinero, renunciando a presentar reclamos o disputas bajo el argumento de no haber obtenido cobros o por desistimiento voluntario."
+      );
+
+      agregarClausula(
+        "CUARTA: CUOTA DE MANTENIMIENTO MENSUAL OBLIGATORIA",
+        "Para conservar la membresía activa, el soporte continuo y la permanencia dentro de los grupos, EL PARTICIPANTE se obliga al pago de una cuota mensual estipulada por LA ADMINISTRACIÓN, fijada actualmente en CINCO DÓLARES ESTADOUNIDENSES ($5.00 USD) (o su equivalente autorizado). Dicha mensualidad tiene carácter obligatorio y será exigible cumplido exactamente UN (1) MES CALENDARIO a partir de la fecha de ingreso al grupo. El incumplimiento de este pago faculta a LA ADMINISTRACIÓN a revocar el acceso de forma inmediata sin derecho a reclamo ni reembolso de importes previos."
+      );
+
+      // Recuadro de Declaración de Conformidad
+      y += 2;
+      doc.setFillColor(241, 245, 249);
+      doc.setDrawColor(203, 213, 225);
+      doc.rect(margenIzq, y, anchoTexto, 15, 'FD');
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(8.5);
+      doc.setTextColor(15, 23, 42);
+      const declTexto = doc.splitTextToSize(
+        "DECLARACIÓN DE CONFORMIDAD: Al completar sus datos y estampar su firma digital, EL PARTICIPANTE declara ser mayor de edad, obrar de libre voluntad y aceptar sin reservas todas las cláusulas estipuladas en este documento.",
+        anchoTexto - 6
+      );
+      doc.text(declTexto, margenIzq + 3, y + 5.5);
+
+      // Bloque inferior de Acta y Firma del Participante
+      y += 22;
+      doc.setFillColor(248, 250, 252);
+      doc.setDrawColor(148, 163, 184);
+      doc.setLineWidth(0.4);
+      doc.rect(margenIzq, y, anchoTexto, 55, 'FD');
+
+      // Columna izquierda: Datos del participante
+      let yDatos = y + 8;
+      const xDatos = margenIzq + 4;
+
+      function filaDato(etiqueta, valor) {
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(8.5);
+        doc.setTextColor(15, 23, 42);
+        doc.text(etiqueta, xDatos, yDatos);
+        const anchoEtiqueta = doc.getTextWidth(etiqueta) + 2;
+        doc.setFont("helvetica", "normal");
+        doc.text(String(valor), xDatos + anchoEtiqueta, yDatos);
+        yDatos += 7.5;
+      }
+
+      filaDato("PARTICIPANTE:", datos.nombre);
+      filaDato("DOCUMENTO DE IDENTIDAD:", datos.documento);
+      filaDato("USUARIO / CONTACTO:", datos.contacto);
+      filaDato("FECHA DE INGRESO:", datos.fecha);
+      filaDato("CUOTA MENSUAL:", "$5.00 USD obligatorios al cumplir 1 mes");
+      filaDato("ESTADO:", "Términos y No Reembolso aceptados");
+
+      // Columna derecha: Recuadro blanco con la Firma Digital
+      const xFirma = 124;
+      const yFirma = y + 5;
+      const anchoFirma = 66;
+      const altoFirma = 45;
+
+      doc.setFillColor(255, 255, 255);
+      doc.setDrawColor(203, 213, 225);
+      doc.rect(xFirma, yFirma, anchoFirma, altoFirma, 'FD');
+
+      // Insertar la imagen PNG del trazo de la firma
+      doc.addImage(datos.firmaBase64, 'PNG', xFirma + 3, yFirma + 2, anchoFirma - 6, 31);
+
+      // Línea y texto debajo de la firma
+      doc.setDrawColor(15, 23, 42);
+      doc.setLineWidth(0.4);
+      doc.line(xFirma + 5, yFirma + 36, xFirma + anchoFirma - 5, yFirma + 36);
+
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(7.5);
+      doc.setTextColor(15, 23, 42);
+      doc.text("FIRMA CONFORME DEL PARTICIPANTE", xFirma + (anchoFirma / 2), yFirma + 41, { align: "center" });
+
+      // Sello de verificación al pie de la hoja A4
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(7.5);
+      doc.setTextColor(100, 116, 139);
+      doc.text(
+        `Firmado digitalmente por ${datos.nombre} (ID: ${datos.documento}) | Fecha: ${datos.fechaHoraExacta} | Código: ${datos.idUnico}`,
+        105,
+        281,
+        { align: "center" }
+      );
+
+      doc.save(datos.nombreArchivo);
+    }
+
     async function procesarContrato(e) {
       e.preventDefault();
 
@@ -520,102 +544,70 @@
       const fecha = document.getElementById('fecha').value;
       const fechaHoraExacta = new Date().toLocaleString();
       const idUnico = 'REG-' + Date.now().toString(36).toUpperCase();
-
-      // 1. Convertir la firma del canvas a imagen PNG fija
       const firmaBase64 = canvas.toDataURL('image/png');
+      const nombreArchivo = `Contrato_${nombre.replace(/\s+/g, '_')}_${idUnico}.pdf`;
 
-      // 2. Pasar los datos y la firma al bloque oficial del documento
-      document.getElementById('out-nombre').textContent = nombre;
-      document.getElementById('out-documento').textContent = documento;
-      document.getElementById('out-contacto').textContent = contacto;
-      document.getElementById('out-fecha').textContent = fecha;
-      document.getElementById('out-firma-img').src = firmaBase64;
-
-      document.getElementById('stamp-footer').innerHTML = 
-        `Firmado digitalmente por <strong>${nombre}</strong> (ID: ${documento}) | Registro: ${fechaHoraExacta} | Código: <strong>${idUnico}</strong>`;
-
-      // 3. Ocultar el formulario editable y activar la vista oficial de 1 página A4
-      const contractDoc = document.getElementById('contract-document');
-      const formElement = document.getElementById('contract-form');
-      const certBlock = document.getElementById('signed-certificate-block');
       const statusMsg = document.getElementById('status-msg');
-      const btnReset = document.getElementById('btn-reset');
-
-      formElement.style.display = 'none';
-      certBlock.style.display = 'block';
-      contractDoc.classList.add('pdf-export-mode');
-
       statusMsg.style.display = 'block';
       statusMsg.style.background = '#dbeafe';
       statusMsg.style.color = '#1e40af';
-      statusMsg.textContent = 'Generando PDF optimizado y enviando copia a la administración...';
+      statusMsg.textContent = 'Generando PDF firmado...';
 
-      // Subir al inicio de la página para evitar que html2canvas deje espacio en blanco arriba
-      window.scrollTo(0, 0);
-      await new Promise(resolve => setTimeout(resolve, 250));
+      // 1. Generar y descargar el PDF A4 con coordenadas exactas
+      generarPDFVectorial({
+        nombre,
+        documento,
+        contacto,
+        fecha,
+        fechaHoraExacta,
+        idUnico,
+        firmaBase64,
+        nombreArchivo
+      });
 
-      const nombreArchivo = `Contrato_${nombre.replace(/\s+/g, '_')}_${idUnico}.pdf`;
+      document.getElementById('stamp-footer').innerHTML =
+        `Firmado digitalmente por <strong>${nombre}</strong> (ID: ${documento}) | Registro: ${fechaHoraExacta} | Código: <strong>${idUnico}</strong>`;
 
-      const opcionesPDF = {
-        margin: [6, 6, 6, 6],
-        filename: nombreArchivo,
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: {
-          scale: 2,
-          useCORS: true,
-          scrollY: 0,
-          scrollX: 0,
-          windowWidth: 800
-        },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-        pagebreak: { mode: 'avoid-all' }
-      };
-
+      // 2. Enviar notificación por correo en segundo plano
       try {
-        // 4. Generar y descargar el PDF en el teléfono o PC
-        await html2pdf().set(opcionesPDF).from(contractDoc).save();
-
-        // 5. Enviar notificación con los datos firmados a skwhitewalker@gmail.com
-        await fetch(`https://formsubmit.co/ajax/${CORREO_PROPIETARIO}`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-          },
-          body: JSON.stringify({
-            _subject: `Contrato Firmado: ${nombre} (${idUnico})`,
-            Codigo_Verificacion: idUnico,
-            Participante: nombre,
-            Documento_Identidad: documento,
-            Usuario_Contacto: contacto,
-            Fecha_Ingreso: fecha,
-            Fecha_Hora_Firma: fechaHoraExacta,
-            Condiciones_Aceptadas: "Aceptó cláusula educativa (sin garantía 100% sin esfuerzo propio), No Reembolso y Mensualidad obligatoria de $5.00 USD al mes."
-          })
-        });
-
-        statusMsg.style.background = '#dcfce7';
-        statusMsg.style.color = '#166534';
-        statusMsg.textContent = '¡Contrato firmado con éxito! El PDF se descargó con tu firma visible y se notificó a skwhitewalker@gmail.com. Envía el PDF descargado al administrador.';
-      } catch (error) {
-        statusMsg.style.background = '#fef2f2';
-        statusMsg.style.color = '#991b1b';
-        statusMsg.textContent = 'El PDF se descargó en tu dispositivo. Envíaselo directamente al administrador.';
-      } finally {
-        contractDoc.classList.remove('pdf-export-mode');
-        btnReset.style.display = 'inline-block';
+        if (WEB3FORMS_ACCESS_KEY !== "") {
+          await fetch('https://api.web3forms.com/submit', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            body: JSON.stringify({
+              access_key: WEB3FORMS_ACCESS_KEY,
+              subject: `Contrato Firmado: ${nombre} (${idUnico})`,
+              from_name: "Contratos Rooster",
+              Codigo_Verificacion: idUnico,
+              Participante: nombre,
+              Documento_Identidad: documento,
+              Usuario_Contacto: contacto,
+              Fecha_Ingreso: fecha,
+              Fecha_Hora_Firma: fechaHoraExacta
+            })
+          });
+        } else {
+          await fetch(`https://formsubmit.co/ajax/${CORREO_PROPIETARIO}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            body: JSON.stringify({
+              _subject: `Contrato Firmado: ${nombre} (${idUnico})`,
+              Codigo_Verificacion: idUnico,
+              Participante: nombre,
+              Documento_Identidad: documento,
+              Usuario_Contacto: contacto,
+              Fecha_Ingreso: fecha,
+              Fecha_Hora_Firma: fechaHoraExacta
+            })
+          });
+        }
+      } catch (err) {
+        // Si el servidor de correo externo tarda o falla, no interrumpe la descarga del PDF
       }
-    }
 
-    function reiniciarFormulario() {
-      document.getElementById('contract-form').reset();
-      document.getElementById('fecha').valueAsDate = new Date();
-      document.getElementById('signed-certificate-block').style.display = 'none';
-      document.getElementById('contract-form').style.display = 'block';
-      document.getElementById('status-msg').style.display = 'none';
-      document.getElementById('btn-reset').style.display = 'none';
-      inicializarCanvas();
-      firmado = false;
+      statusMsg.style.background = '#dcfce7';
+      statusMsg.style.color = '#166534';
+      statusMsg.textContent = '¡Contrato firmado y descargado correctamente! Envía el archivo PDF descargado al administrador para completar tu registro.';
     }
   </script>
 </body>
